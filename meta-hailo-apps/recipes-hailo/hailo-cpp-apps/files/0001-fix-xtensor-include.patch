@@ -1,0 +1,243 @@
+From 7a66912938baf9ba957a43f0b75f08f67d4b9e4e Mon Sep 17 00:00:00 2001
+From: Nadav Eden <nadave@hailo.ai>
+Date: Thu, 12 Feb 2026 13:40:16 +0000
+Subject: [PATCH] fix xtensor include
+
+---
+ .../cpp/common/general/hailo_xtensor.hpp      | 12 +++----
+ hailo_apps/cpp/common/general/math.hpp        | 10 +++---
+ hailo_apps/cpp/common/general/tensors.hpp     |  4 +--
+ .../cpp/instance_segmentation/CMakeLists.txt  | 12 -------
+ .../instance_seg_postprocess.hpp              |  4 +--
+ hailo_apps/cpp/pose_estimation/CMakeLists.txt | 27 ++--------------
+ .../yolov8pose_postprocess.cpp                | 32 +++++++++----------
+ .../yolov8pose_postprocess.hpp                |  4 +--
+ 8 files changed, 33 insertions(+), 72 deletions(-)
+
+diff --git a/hailo_apps/cpp/common/general/hailo_xtensor.hpp b/hailo_apps/cpp/common/general/hailo_xtensor.hpp
+index 9631676..af5a663 100644
+--- a/hailo_apps/cpp/common/general/hailo_xtensor.hpp
++++ b/hailo_apps/cpp/common/general/hailo_xtensor.hpp
+@@ -5,15 +5,11 @@
+ #pragma once
+ 
+ #include "hailo_objects.hpp"
+-#include "xtensor/containers/xarray.hpp"
+-#include "xtensor/views/xview.hpp"
+-#include "xtensor/io/xnpy.hpp"
++#include "xtensor/xarray.hpp"
++#include "xtensor/xview.hpp"
++#include "xtensor/xnpy.hpp"
+ #include <string>
+ 
+-
+-
+-
+-
+ namespace hailo_common
+ {
+     inline HailoMatrixPtr create_matrix_ptr(xt::xarray<float> &xmatrix)
+@@ -83,4 +79,4 @@ namespace hailo_common
+         // Add HailoLandmarks pointer to the detection.
+         detection.add_object(std::make_shared<HailoLandmarks>(landmarks_type, points, threshold, pairs));
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/hailo_apps/cpp/common/general/math.hpp b/hailo_apps/cpp/common/general/math.hpp
+index 2a1e3e2..8b22395 100644
+--- a/hailo_apps/cpp/common/general/math.hpp
++++ b/hailo_apps/cpp/common/general/math.hpp
+@@ -4,11 +4,11 @@
+  **/
+ #pragma once
+ 
+-#include "xtensor/containers/xarray.hpp"
+-#include "xtensor/core/xeval.hpp"
+-#include "xtensor/misc/xsort.hpp"
+-#include "xtensor/views/xview.hpp"
+-#include "xtensor/io/xio.hpp"
++#include "xtensor/xarray.hpp"
++#include "xtensor/xeval.hpp"
++#include "xtensor/xsort.hpp"
++#include "xtensor/xview.hpp"
++#include "xtensor/xio.hpp"
+ 
+ namespace common
+ {
+diff --git a/hailo_apps/cpp/common/general/tensors.hpp b/hailo_apps/cpp/common/general/tensors.hpp
+index 1f11a93..38d7aa3 100644
+--- a/hailo_apps/cpp/common/general/tensors.hpp
++++ b/hailo_apps/cpp/common/general/tensors.hpp
+@@ -5,8 +5,8 @@
+ #pragma once
+ 
+ #include "hailo_objects.hpp"
+-#include "xtensor/containers/xadapt.hpp"
+-#include "xtensor/containers/xarray.hpp"
++#include "xtensor/xadapt.hpp"
++#include "xtensor/xarray.hpp"
+ 
+ namespace common
+ {
+diff --git a/hailo_apps/cpp/instance_segmentation/CMakeLists.txt b/hailo_apps/cpp/instance_segmentation/CMakeLists.txt
+index e1e471b..c5c8b42 100644
+--- a/hailo_apps/cpp/instance_segmentation/CMakeLists.txt
++++ b/hailo_apps/cpp/instance_segmentation/CMakeLists.txt
+@@ -24,17 +24,6 @@ find_package(Threads REQUIRED)
+ find_package(OpenCV REQUIRED)
+ find_package(HailoRT REQUIRED)
+ 
+-# External dependencies
+-include(ExternalProject)
+-ExternalProject_Add(xtl-test
+-    GIT_REPOSITORY https://github.com/xtensor-stack/xtl
+-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/external
+-)
+-ExternalProject_Add(xtensor-test
+-    GIT_REPOSITORY https://github.com/xtensor-stack/xtensor
+-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/external -Dxtl_DIR=${CMAKE_BINARY_DIR}/external/share/cmake/xtl/
+-)
+-
+ # Create executable
+ add_executable(${PROJECT_NAME}
+     instance_segmentation.cpp
+@@ -46,7 +35,6 @@ add_executable(${PROJECT_NAME}
+ target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILE_OPTIONS_CPP})
+ 
+ # Dependencies and linking
+-add_dependencies(${PROJECT_NAME} xtl-test xtensor-test)
+ target_include_directories(${PROJECT_NAME} PRIVATE
+     ${CMAKE_BINARY_DIR}/external/include
+     ${CMAKE_CURRENT_SOURCE_DIR}
+diff --git a/hailo_apps/cpp/instance_segmentation/instance_seg_postprocess.hpp b/hailo_apps/cpp/instance_segmentation/instance_seg_postprocess.hpp
+index 70a70b4..d2e3feb 100644
+--- a/hailo_apps/cpp/instance_segmentation/instance_seg_postprocess.hpp
++++ b/hailo_apps/cpp/instance_segmentation/instance_seg_postprocess.hpp
+@@ -30,8 +30,8 @@
+ #include "general/hailo_tensors.hpp"
+ #include "general/hailo_common.hpp"
+ 
+-#include <xtensor/views/xview.hpp>
+-#include <xtensor/misc/xsort.hpp>
++#include <xtensor/xview.hpp>
++#include <xtensor/xsort.hpp>
+ 
+ using namespace hailo_utils;
+ // --------------------------- FUNCTION DECLARATIONS ---------------------------
+diff --git a/hailo_apps/cpp/pose_estimation/CMakeLists.txt b/hailo_apps/cpp/pose_estimation/CMakeLists.txt
+index 81ea403..73b035e 100644
+--- a/hailo_apps/cpp/pose_estimation/CMakeLists.txt
++++ b/hailo_apps/cpp/pose_estimation/CMakeLists.txt
+@@ -16,8 +16,6 @@ set(CMAKE_CXX_STANDARD 20)
+ 
+ set(COMPILE_OPTIONS -Werror -Wall -Wextra -Wconversion -O3 -Wno-reorder -Wno-ignored-qualifiers -Wno-extra -Wno-unused-local-typedefs -Wno-conversion -Wno-parentheses -Wno-unused-but-set-variable -Wno-array-bounds -Wno-unused-value)
+ 
+-set(BASE_DIR /path/to/yolov8/example/folder)
+-
+ set(CMAKE_THREAD_LIBS_INIT "-lpthread")
+ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+ set(CMAKE_HAVE_THREADS_LIBRARY 1)
+@@ -26,38 +24,17 @@ set(CMAKE_USE_PTHREADS_INIT 1)
+ set(THREADS_PREFER_PTHREAD_FLAG ON)
+ 
+ find_package(Threads)
+-
+ find_package(HailoRT REQUIRED)
++find_package(OpenCV REQUIRED)
+ 
+-find_package( OpenCV REQUIRED)
+ message(STATUS "Found OpenCV: " ${OpenCV_INCLUDE_DIRS})
+ 
+ file(GLOB SOURCES
+     ./*.cpp
+ )
+ list(APPEND SOURCES ../common/toolbox.cpp ../common/hailo_infer.cpp)
+-include(ExternalProject)
+-set(EXTERNAL_INSTALL_LOCATION ${CMAKE_BINARY_DIR}/external)
+-
+-# External dependencies
+-include(ExternalProject)
+-ExternalProject_Add(xtl-test
+-    GIT_REPOSITORY https://github.com/xtensor-stack/xtl
+-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/external
+-)
+-ExternalProject_Add(xtensor-test
+-    GIT_REPOSITORY https://github.com/xtensor-stack/xtensor
+-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/external -Dxtl_DIR=${CMAKE_BINARY_DIR}/external/share/cmake/xtl/
+-)
+-
+-
+-include_directories(${EXTERNAL_INSTALL_LOCATION}/include)
+-link_directories(${EXTERNAL_INSTALL_LOCATION}/lib)
+-
+ link_libraries(stdc++fs)
+ add_executable(${PROJECT_NAME} ${SOURCES})
+-add_dependencies(${PROJECT_NAME} xtl-test xtensor-test)
+ include_directories(${OpenCV_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../common)
+-include_directories(${ONNXRUNTIME_INCLUDE_DIR})
+ target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILE_OPTIONS} -fconcepts)
+-target_link_libraries(${PROJECT_NAME} HailoRT::libhailort ${CMAKE_THREAD_LIBS_INIT} ${OpenCV_LIBS})
+\ No newline at end of file
++target_link_libraries(${PROJECT_NAME} HailoRT::libhailort ${CMAKE_THREAD_LIBS_INIT} ${OpenCV_LIBS})
+diff --git a/hailo_apps/cpp/pose_estimation/yolov8pose_postprocess.cpp b/hailo_apps/cpp/pose_estimation/yolov8pose_postprocess.cpp
+index 471a1f5..e25a1b2 100644
+--- a/hailo_apps/cpp/pose_estimation/yolov8pose_postprocess.cpp
++++ b/hailo_apps/cpp/pose_estimation/yolov8pose_postprocess.cpp
+@@ -13,22 +13,22 @@
+ #include "labels/coco_eighty.hpp"
+ #include "yolov8pose_postprocess.hpp"
+ 
+-#include "xtensor/containers/xadapt.hpp"
+-#include "xtensor/containers/xarray.hpp"
+-#include "xtensor/containers/xcontainer.hpp"
+-#include "xtensor/core/xeval.hpp"
+-#include "xtensor/containers/xtensor.hpp"
+-#include "xtensor/views/xindex_view.hpp"
+-#include "xtensor/io/xio.hpp"
+-#include "xtensor/misc/xmanipulation.hpp"
+-#include "xtensor/views/xmasked_view.hpp"
+-#include "xtensor/misc/xset_operation.hpp"
+-#include "xtensor/misc/xpad.hpp"
+-#include "xtensor/generators/xrandom.hpp"
+-#include "xtensor/core/xshape.hpp"
+-#include "xtensor/misc/xsort.hpp"
+-#include "xtensor/views/xstrided_view.hpp"
+-#include "xtensor/views/xview.hpp"
++#include "xtensor/xadapt.hpp"
++#include "xtensor/xarray.hpp"
++#include "xtensor/xcontainer.hpp"
++#include "xtensor/xeval.hpp"
++#include "xtensor/xtensor.hpp"
++#include "xtensor/xindex_view.hpp"
++#include "xtensor/xio.hpp"
++#include "xtensor/xmanipulation.hpp"
++#include "xtensor/xmasked_view.hpp"
++#include "xtensor/xset_operation.hpp"
++#include "xtensor/xpad.hpp"
++#include "xtensor/xrandom.hpp"
++#include "xtensor/xshape.hpp"
++#include "xtensor/xsort.hpp"
++#include "xtensor/xstrided_view.hpp"
++#include "xtensor/xview.hpp"
+ 
+ 
+ 
+diff --git a/hailo_apps/cpp/pose_estimation/yolov8pose_postprocess.hpp b/hailo_apps/cpp/pose_estimation/yolov8pose_postprocess.hpp
+index 00ece03..8afe056 100644
+--- a/hailo_apps/cpp/pose_estimation/yolov8pose_postprocess.hpp
++++ b/hailo_apps/cpp/pose_estimation/yolov8pose_postprocess.hpp
+@@ -6,8 +6,8 @@
+ #include "general/hailo_objects.hpp"
+ #include "general/hailo_common.hpp"
+ 
+-#include <xtensor/views/xview.hpp>
+-#include <xtensor/misc/xsort.hpp>
++#include <xtensor/xview.hpp>
++#include <xtensor/xsort.hpp>
+ 
+ struct KeyPt {
+     float xs;
+-- 
+2.34.1
+
