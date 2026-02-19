@@ -5,9 +5,9 @@ LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
 # Dependencies
-DEPENDS = "libhailort opencv xtensor xtl "
+DEPENDS = "libhailort opencv xtensor xtl gstreamer1.0-plugins-base "
 # Runtime dependencies
-RDEPENDS:${PN} = "libhailort opencv "
+RDEPENDS:${PN} = "libhailort opencv gstreamer1.0-plugins-base "
 
 # Source repository
 SRC_URI = "git://github.com/hailo-ai/hailo-apps.git;protocol=https;branch=main"
@@ -56,6 +56,13 @@ SRC_URI[clip_vit_l_14_laion2B_image_encoder.sha256sum] = "95fde73753b7b9fcfd05f8
 SRC_URI[text_projection.sha256sum] = "c7676f9eb6161c57bbe84c7a8429e34c735e2d8a7f054b2aa3c2cca05209e6cc"
 SRC_URI[embedding_weights.sha256sum] = "7c27d45e1ef8ed751d1916b8bec450b30b48b28e9fb4ea366ac2cdbefbb1954f"
 SRC_URI[bpe_simple_vocab_16e6.sha256sum] = "67603cfda2e032ad77b5f8808af37789d590db664b26df8705d2bf8b3c553fc8"
+
+# Sample video 
+SRC_URI += "\
+    https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/video/example_640.mp4;name=example_640 \
+"
+SRC_URI[example_640.sha256sum] = "d36486029f416499dd7759c279c13e51c1d21d7c3d75c8819feea52457667c70"
+
 
 SRCREV = "${AUTOREV}"
 
@@ -113,15 +120,20 @@ do_compile() {
 }
 
 do_install() {
-    install -d ${D}/hailo-apps/zero_shot_classification
-    install -d ${D}/usr/local/hailo/resources/models/${HAILO_DEVICE}
-    install -m 0644 ${WORKDIR}/fastvit_sa12.hef ${D}/usr/local/hailo/resources/models/${HAILO_DEVICE}/
-    install -m 0644 ${WORKDIR}/yolov8m.hef ${D}/usr/local/hailo/resources/models/${HAILO_DEVICE}/
-    install -m 0644 ${WORKDIR}/yolov8s_pose.hef ${D}/usr/local/hailo/resources/models/${HAILO_DEVICE}/
-    install -m 0644 ${WORKDIR}/fcn8_resnet_v1_18.hef ${D}/usr/local/hailo/resources/models/${HAILO_DEVICE}/
-    install -m 0644 ${WORKDIR}/yolov5m_seg.hef ${D}/usr/local/hailo/resources/models/${HAILO_DEVICE}/
-    install -m 0644 ${WORKDIR}/scdepthv3.hef ${D}/usr/local/hailo/resources/models/${HAILO_DEVICE}/
-    install -m 0644 ${WORKDIR}/yolo11s_obb.hef ${D}/usr/local/hailo/resources/models/${HAILO_DEVICE}/
+    for app in ${HAILO_CPP_APPS}; do
+        install -d ${D}/hailo-apps/${app}
+        install -d ${D}/hailo-apps/${app}/config
+        install -m 0755 ${HAILO_CPP_ROOT}/../config/get_hef.sh ${D}/hailo-apps/${app}/config/
+        install -m 0755 ${HAILO_CPP_ROOT}/../config/get_input.sh ${D}/hailo-apps/${app}/config/
+    done
+    install -d ${D}/hailo-apps/resources/videos
+    install -m 0644 ${WORKDIR}/fastvit_sa12.hef ${D}/hailo-apps/classification/
+    install -m 0644 ${WORKDIR}/yolov8m.hef ${D}/hailo-apps/object_detection/
+    install -m 0644 ${WORKDIR}/yolov8s_pose.hef ${D}/hailo-apps/pose_estimation/
+    install -m 0644 ${WORKDIR}/fcn8_resnet_v1_18.hef ${D}/hailo-apps/semantic_segmentation/
+    install -m 0644 ${WORKDIR}/yolov5m_seg.hef ${D}/hailo-apps/instance_segmentation/
+    install -m 0644 ${WORKDIR}/scdepthv3.hef ${D}/hailo-apps/depth_estimation_mono/
+    install -m 0644 ${WORKDIR}/yolo11s_obb.hef ${D}/hailo-apps/oriented_object_detection/
     
     # CLIP Specific installations
     install -m 0644 ${WORKDIR}/bpe_simple_vocab_16e6.txt ${D}/hailo-apps/zero_shot_classification/
@@ -129,10 +141,12 @@ do_install() {
     install -m 0644 ${WORKDIR}/text_projection.bin ${D}/hailo-apps/zero_shot_classification/
     install -m 0644 ${WORKDIR}/clip_vit_l_14_laion2B_image_encoder.hef ${D}/hailo-apps/zero_shot_classification/
     install -m 0644 ${WORKDIR}/clip_text_encoder_vit_l_14_laion2B.hef ${D}/hailo-apps/zero_shot_classification/
+    
+    install -m 0644 ${WORKDIR}/example_640.mp4 ${D}/hailo-apps/resources/videos
+    install -m 0644 ${WORKDIR}/bus.jpg ${D}/hailo-apps/resources/
 
     for app in ${HAILO_CPP_APPS}; do
         bld_dir="${WORKDIR}/build/${app}"
-        install -d ${D}/hailo-apps/${app}
 
         # assume the built binary is ${bld_dir}/${app}
         bin_path="${bld_dir}/${app}"
