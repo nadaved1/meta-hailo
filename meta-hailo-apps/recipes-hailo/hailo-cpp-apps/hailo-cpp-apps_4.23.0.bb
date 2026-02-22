@@ -5,9 +5,13 @@ LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
 # Dependencies
-DEPENDS = "libhailort opencv xtensor xtl gstreamer1.0-plugins-base "
+DEPENDS = "libhailort opencv xtensor xtl \
+           gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad \
+           gstreamer1.0-plugins-ugly gstreamer1.0-libav onnxruntime"
 # Runtime dependencies
-RDEPENDS:${PN} = "libhailort opencv gstreamer1.0-plugins-base "
+RDEPENDS:${PN} = "libhailort opencv \
+                  gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad \
+                  gstreamer1.0-plugins-ugly gstreamer1.0-libav onnxruntime"
 
 # Source repository
 SRC_URI = "git://github.com/hailo-ai/hailo-apps.git;protocol=https;branch=main"
@@ -15,6 +19,7 @@ SRC_URI = "git://github.com/hailo-ai/hailo-apps.git;protocol=https;branch=main"
 # Needed for the pose-estimation and seg apps
 SRC_URI += "\
     file://0001-fix-xtensor-include.patch \
+    file://0002-fix-onnxruntime-paths.patch \
 "
 
 MZ_VERSION = "v2.17.0"
@@ -29,6 +34,8 @@ SRC_URI += "\
     https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled/${MZ_VERSION}/${HAILO_DEVICE}/scdepthv3.hef;name=scdepthv3 \
     https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/hefs/h8/hailo_yolov8n_4_classes_vga.hef;name=hailo_yolov8n_4_classes_vga \
     https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/hefs/h8/yolo11s_obb.hef;name=yolo11s_obb \
+    https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/hefs/h8/yolov8m_seg.hef;name=yolov8m_seg \
+    https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/onnxs/yolov8m-seg_post.onnx;name=yolov8m-seg_post \
 "
 SRC_URI[fastvit_sa12.sha256sum] = "1372f0f27d239488d17293cdba1cb6ad8c609629e76226c04e242e89fdd63493"
 SRC_URI[yolov8m.sha256sum] = "9481dbff7798d90302e170958943578d444b61c9833c67fef36075fe129efe7f"
@@ -40,6 +47,8 @@ SRC_URI[yolo11s_obb.sha256sum] = "546653b5d66c59b2e2731d1435efc13d6d7aa5f7a7468c
 #SRC_URI[clip_vit_b_32_image_encoder.sha256sum] = "841e79e202dd3751e5ceceb12e3b56db0f4d02bc8cb0b226a723d1e82ee7ea70"
 #SRC_URI[clip_vit_b_32_text_encoder.sha256sum] = "4be9dbc51533571d0902a345c37f4a147ee0f79a438b1e1e7072a045b77433cb"
 SRC_URI[hailo_yolov8n_4_classes_vga.sha256sum] = "62049ac5d2d7ccff3102c136634b7d88d9ad992dc72336ee24d76e0ee59441c2"
+SRC_URI[yolov8m_seg.sha256sum] = "615edbdbe3807fb63b864640cb0601e19cbc7f6b6da7cb2109864ae21d2f690b"
+SRC_URI[yolov8m-seg_post.sha256sum] = "f3db663c64cfd43444cbaab64e2da94fa32dcca3514d45412a00ad8c8dfd4abd"
 
 # Files for CLIP
 SRC_URI += "\
@@ -65,6 +74,7 @@ SRC_URI[example_640.sha256sum] = "d36486029f416499dd7759c279c13e51c1d21d7c3d75c8
 
 
 SRCREV = "${AUTOREV}"
+PR = "r1"
 
 HAILO_CPP_ROOT      = "${WORKDIR}/git/hailo_apps/cpp"
 HAILO_CPP_APPS      = "\
@@ -76,8 +86,8 @@ HAILO_CPP_APPS      = "\
     instance_segmentation \
     zero_shot_classification \
     depth_estimation_mono \
+    onnxrt_hailo_pipeline \
 "
-#    onnxrt_hailo_pipeline
 inherit pkgconfig cmake
 
 EXTRA_OECMAKE += "\
@@ -126,6 +136,7 @@ do_install() {
         install -m 0755 ${HAILO_CPP_ROOT}/../config/get_hef.sh ${D}/hailo-apps/${app}/config/
         install -m 0755 ${HAILO_CPP_ROOT}/../config/get_input.sh ${D}/hailo-apps/${app}/config/
     done
+
     install -d ${D}/hailo-apps/resources/videos
     install -m 0644 ${WORKDIR}/fastvit_sa12.hef ${D}/hailo-apps/classification/
     install -m 0644 ${WORKDIR}/yolov8m.hef ${D}/hailo-apps/object_detection/
@@ -134,6 +145,8 @@ do_install() {
     install -m 0644 ${WORKDIR}/yolov5m_seg.hef ${D}/hailo-apps/instance_segmentation/
     install -m 0644 ${WORKDIR}/scdepthv3.hef ${D}/hailo-apps/depth_estimation_mono/
     install -m 0644 ${WORKDIR}/yolo11s_obb.hef ${D}/hailo-apps/oriented_object_detection/
+    install -m 0644 ${WORKDIR}/yolov8m_seg.hef ${D}/hailo-apps/onnxrt_hailo_pipeline/
+    install -m 0644 ${WORKDIR}/yolov8m-seg_post.onnx ${D}/hialo-apps/onnxrt_hailo_pipeline/
     
     # CLIP Specific installations
     install -m 0644 ${WORKDIR}/bpe_simple_vocab_16e6.txt ${D}/hailo-apps/zero_shot_classification/
@@ -165,7 +178,6 @@ do_install() {
 
 FILES:${PN} += "\
     /hailo-apps/* \
-    /usr/local/hailo/* \
 "
 
 # Don't fail if package is empty (for testing)
