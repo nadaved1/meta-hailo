@@ -44,34 +44,17 @@ SRC_URI[fcn8_resnet_v1_18.sha256sum] = "be504f99bc92bb32ba2cbfc88267e19f5c6db1b3
 SRC_URI[yolov5m_seg.sha256sum] = "7c9160d89dc36b7fe7651eed680c7c1b2c96f4269c23fa67de9101ef7a5cf57e"
 SRC_URI[scdepthv3.sha256sum] = "5b88f3b8975bf5869d86f2c2d1c21cfbc24e548eaf14d945ec08531bbe445cae"
 SRC_URI[yolo11s_obb.sha256sum] = "546653b5d66c59b2e2731d1435efc13d6d7aa5f7a7468c99ff83cff8e4f23dfc"
-#SRC_URI[clip_vit_b_32_image_encoder.sha256sum] = "841e79e202dd3751e5ceceb12e3b56db0f4d02bc8cb0b226a723d1e82ee7ea70"
-#SRC_URI[clip_vit_b_32_text_encoder.sha256sum] = "4be9dbc51533571d0902a345c37f4a147ee0f79a438b1e1e7072a045b77433cb"
 SRC_URI[hailo_yolov8n_4_classes_vga.sha256sum] = "62049ac5d2d7ccff3102c136634b7d88d9ad992dc72336ee24d76e0ee59441c2"
 SRC_URI[yolov8m_seg.sha256sum] = "615edbdbe3807fb63b864640cb0601e19cbc7f6b6da7cb2109864ae21d2f690b"
 SRC_URI[yolov8m-seg_post.sha256sum] = "f3db663c64cfd43444cbaab64e2da94fa32dcca3514d45412a00ad8c8dfd4abd"
 
-# Files for CLIP
-SRC_URI += "\
-    https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/images/bus.jpg;name=bus \
-    https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/hefs/h8/clip_text_encoder_vit_l_14_laion2B.hef;name=clip_text_encoder_vit_l_14_laion2B \
-    https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/hefs/h8/clip_vit_l_14_laion2B_image_encoder.hef;name=clip_vit_l_14_laion2B_image_encoder \
-    https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/external+bin+files/text_projection.bin;name=text_projection \
-    https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/npy+files/embedding_weights.npy;name=embedding_weights \
-    https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/txt+files/bpe_simple_vocab_16e6.txt;name=bpe_simple_vocab_16e6 \
-"
-SRC_URI[bus.sha256sum] = "33b198a1d2839bb9ac4c65d61f9e852196793cae9a0781360859425f6022b69c"
-SRC_URI[clip_text_encoder_vit_l_14_laion2B.sha256sum] = "1b42247a51d7bbf9b6b5e52a60f8af577a192fe0ad63459936ff889c42a17349"
-SRC_URI[clip_vit_l_14_laion2B_image_encoder.sha256sum] = "95fde73753b7b9fcfd05f84db3ca72d622347e8ad8c83f8b074053f618b1e9ae"
-SRC_URI[text_projection.sha256sum] = "c7676f9eb6161c57bbe84c7a8429e34c735e2d8a7f054b2aa3c2cca05209e6cc"
-SRC_URI[embedding_weights.sha256sum] = "7c27d45e1ef8ed751d1916b8bec450b30b48b28e9fb4ea366ac2cdbefbb1954f"
-SRC_URI[bpe_simple_vocab_16e6.sha256sum] = "67603cfda2e032ad77b5f8808af37789d590db664b26df8705d2bf8b3c553fc8"
-
 # Sample video 
 SRC_URI += "\
     https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/video/example_640.mp4;name=example_640 \
+    https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/images/bus.jpg;name=bus \
 "
 SRC_URI[example_640.sha256sum] = "d36486029f416499dd7759c279c13e51c1d21d7c3d75c8819feea52457667c70"
-
+SRC_URI[bus.sha256sum] = "33b198a1d2839bb9ac4c65d61f9e852196793cae9a0781360859425f6022b69c"
 
 SRCREV = "${AUTOREV}"
 PR = "r1"
@@ -84,7 +67,6 @@ HAILO_CPP_APPS      = "\
     oriented_object_detection \
     semantic_segmentation \
     instance_segmentation \
-    zero_shot_classification \
     depth_estimation_mono \
     onnxrt_hailo_pipeline \
 "
@@ -146,15 +128,9 @@ do_install() {
     install -m 0644 ${WORKDIR}/scdepthv3.hef ${D}/hailo-apps/depth_estimation_mono/
     install -m 0644 ${WORKDIR}/yolo11s_obb.hef ${D}/hailo-apps/oriented_object_detection/
     install -m 0644 ${WORKDIR}/yolov8m_seg.hef ${D}/hailo-apps/onnxrt_hailo_pipeline/
-    install -m 0644 ${WORKDIR}/yolov8m-seg_post.onnx ${D}/hialo-apps/onnxrt_hailo_pipeline/
+    install -m 0644 ${WORKDIR}/yolov8m-seg_post.onnx ${D}/hailo-apps/onnxrt_hailo_pipeline/
     
-    # CLIP Specific installations
-    install -m 0644 ${WORKDIR}/bpe_simple_vocab_16e6.txt ${D}/hailo-apps/zero_shot_classification/
-    install -m 0644 ${WORKDIR}/embedding_weights.npy ${D}/hailo-apps/zero_shot_classification/ViT-L-14_laion2b_s32b_b82k.npy
-    install -m 0644 ${WORKDIR}/text_projection.bin ${D}/hailo-apps/zero_shot_classification/
-    install -m 0644 ${WORKDIR}/clip_vit_l_14_laion2B_image_encoder.hef ${D}/hailo-apps/zero_shot_classification/
-    install -m 0644 ${WORKDIR}/clip_text_encoder_vit_l_14_laion2B.hef ${D}/hailo-apps/zero_shot_classification/
-    
+    # Sample inputs
     install -m 0644 ${WORKDIR}/example_640.mp4 ${D}/hailo-apps/resources/videos
     install -m 0644 ${WORKDIR}/bus.jpg ${D}/hailo-apps/resources/
 
