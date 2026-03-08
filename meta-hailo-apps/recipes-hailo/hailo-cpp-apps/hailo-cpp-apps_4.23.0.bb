@@ -5,7 +5,7 @@ LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
 # Dependencies
-DEPENDS = "libhailort opencv xtensor xtl \
+DEPENDS = "libhailort opencv xtensor xtl nlohmann-json \
            gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad \
            gstreamer1.0-plugins-ugly gstreamer1.0-libav onnxruntime"
 # Runtime dependencies
@@ -20,6 +20,7 @@ SRC_URI = "git://github.com/hailo-ai/hailo-apps.git;protocol=https;branch=main"
 SRC_URI += "\
     file://0001-fix-xtensor-include.patch \
     file://0002-fix-onnxruntime-paths.patch \
+    file://0003-remove-imshow-fix-capture.open.patch \
 "
 
 MZ_VERSION = "v2.17.0"
@@ -117,17 +118,23 @@ do_install() {
         install -d ${D}/hailo-apps/${app}/config
         install -m 0755 ${HAILO_CPP_ROOT}/../config/get_hef.sh ${D}/hailo-apps/${app}/config/
         install -m 0755 ${HAILO_CPP_ROOT}/../config/get_input.sh ${D}/hailo-apps/${app}/config/
+        install -m 0644 ${HAILO_CPP_ROOT}/../config/networks.json ${D}/hailo-apps/${app}/config/
+        install -m 0644 ${HAILO_CPP_ROOT}/../config/inputs.json ${D}/hailo-apps/${app}/config/
     done
-
     install -d ${D}/hailo-apps/resources/videos
-    install -m 0644 ${WORKDIR}/fastvit_sa12.hef ${D}/hailo-apps/classification/
-    install -m 0644 ${WORKDIR}/yolov8m.hef ${D}/hailo-apps/object_detection/
-    install -m 0644 ${WORKDIR}/yolov8s_pose.hef ${D}/hailo-apps/pose_estimation/
-    install -m 0644 ${WORKDIR}/fcn8_resnet_v1_18.hef ${D}/hailo-apps/semantic_segmentation/
-    install -m 0644 ${WORKDIR}/yolov5m_seg.hef ${D}/hailo-apps/instance_segmentation/
-    install -m 0644 ${WORKDIR}/scdepthv3.hef ${D}/hailo-apps/depth_estimation_mono/
-    install -m 0644 ${WORKDIR}/yolo11s_obb.hef ${D}/hailo-apps/oriented_object_detection/
-    install -m 0644 ${WORKDIR}/yolov8m_seg.hef ${D}/hailo-apps/onnxrt_hailo_pipeline/
+    install -m 0644 ${HAILO_CPP_ROOT}/object_detection/visualization_config.json ${D}/hailo-apps/object_detection/
+    install -m 0644 ${HAILO_CPP_ROOT}/instance_segmentation/visualization_config.json ${D}/hailo-apps/instance_segmentation/
+    # Install HEF files only if PRE_DOWNLOAD_BASE_HEFS is set to YES
+    if [ "${PRE_DOWNLOAD_BASE_HEFS}" = "YES" ]; then
+        install -m 0644 ${WORKDIR}/fastvit_sa12.hef ${D}/hailo-apps/classification/
+        install -m 0644 ${WORKDIR}/yolov8m.hef ${D}/hailo-apps/object_detection/
+        install -m 0644 ${WORKDIR}/yolov8s_pose.hef ${D}/hailo-apps/pose_estimation/
+        install -m 0644 ${WORKDIR}/fcn8_resnet_v1_18.hef ${D}/hailo-apps/semantic_segmentation/
+        install -m 0644 ${WORKDIR}/yolov5m_seg.hef ${D}/hailo-apps/instance_segmentation/
+        install -m 0644 ${WORKDIR}/scdepthv3.hef ${D}/hailo-apps/depth_estimation_mono/
+        install -m 0644 ${WORKDIR}/yolo11s_obb.hef ${D}/hailo-apps/oriented_object_detection/
+        install -m 0644 ${WORKDIR}/yolov8m_seg.hef ${D}/hailo-apps/onnxrt_hailo_pipeline/
+    fi
     install -m 0644 ${WORKDIR}/yolov8m-seg_post.onnx ${D}/hailo-apps/onnxrt_hailo_pipeline/
     
     # Sample inputs
